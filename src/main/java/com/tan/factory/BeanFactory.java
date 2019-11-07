@@ -3,7 +3,7 @@ package com.tan.factory;
 import java.beans.beancontext.BeanContext;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 /*
@@ -21,6 +21,8 @@ public class BeanFactory {
     //定义一个properties对象
     private static Properties props;
 
+    //定义一个Map，用于存放我们要创建的对象，我们把它称之为容器
+    private static Map<String,Object> beans;
     //选择使用静态代码块为properties对象赋值
     static {
         try {
@@ -29,10 +31,34 @@ public class BeanFactory {
             //获取properties文件对象流
             InputStream in = BeanFactory.class.getClassLoader().getResourceAsStream("bean.properties");
             props.load(in);
-
+            //创建一个对象
+            //实例化容器
+            beans = new HashMap<String, Object>();
+            //取出配置文件中所有key
+            Enumeration keys = props.keys();
+            //遍历枚举
+            while (keys.hasMoreElements()){
+                //取出每个key
+                String key = keys.nextElement().toString();
+                //根据key，获取value
+                String beanPath = props.getProperty(key);
+                //反射创建对象
+                Object value = Class.forName(beanPath).newInstance();
+                //把key和value存入容器中
+                beans.put(key,value);
+            }
         } catch (Exception e) {
             throw new ExceptionInInitializerError("初始化properties失败");
         }
+    }
+
+    /**
+     * 根据bean名称获取对象
+     * @param beanName
+     * @return
+     */
+    public static Object getBean(String beanName) {
+        return beans.get(beanName);
     }
 
     /*
@@ -40,15 +66,16 @@ public class BeanFactory {
      *@param beanName
      * @return
      * */
-    public static Object getBean(String beanName) {
+    //创建多个对象
+/*    public static Object getBean(String beanName) {
         Object bean = null;
         try {
             String beanPath = props.getProperty(beanName);
 //            System.out.println(beanPath);
-            bean = Class.forName(beanPath).newInstance();
+            bean = Class.forName(beanPath).newInstance(); //每次都会调用默认构造函数创建对象
         } catch (Exception e) {
             e.printStackTrace();
         }
         return bean;
-    }
+    }*/
 }
